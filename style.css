@@ -1,0 +1,47 @@
+* {
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'arial', sans-serif;
+}
+
+#filters {
+    padding: 10px;
+}
+
+#filters > select, #filters > button {
+    padding: 5px 10px;
+}
+
+#filters > button {
+    background-color: #23B3FF;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+tr:nth-child(odd) > * {
+    background-color: #e7e7e7;
+}
+
+td:nth-child(9), td:nth-child(10), td:nth-child(11) {
+    max-width: 180px;
+}
+
+th {
+    border-bottom: 1px solid #b4b4b4;
+}
+
+th, td {
+    padding: 10px 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
