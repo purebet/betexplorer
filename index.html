@@ -12,13 +12,44 @@
 </head>
 <body>
     <main>
-        <div id="filters">
-            <select name="" id="sportFilter">
-                <option value="" selected>none</option>
-            </select>
-            <button id="filterBets">Apply</button>
-        </div>
+        <form id="filters">
+
+            <label>
+                <span>Sport</span>
+                <select name="sportFilter">
+                    <option value="" selected>all</option>
+                </select>
+            </label><label>
+                <span>League</span>
+                <input type="number" name="leagueFilter">
+            </label><label>
+                <span>Event</span>
+                <input type="number" name="eventFilter">
+            </label><label>
+                <span>Market</span>
+                <input type="number" name="mktFilter">
+            </label><label>
+                <span>Free</span>
+                <select name="isFreeFilter">
+                    <option value="" selected>all</option>
+                    <option value="1">yes</option>
+                    <option value="0">no</option>
+                </select>
+            </label><label>
+                <span>To Aggregate</span>
+                <select name="isAggregateFilter">
+                    <option value="" selected>all</option>
+                    <option value="1">yes</option>
+                    <option value="0">no</option>
+                </select>
+            </label>
+
+            <input type="submit" value="Search">
+
+        </form>
+
         <table id="betsTable"></table>
+
     </main>
 </body>
 </html>

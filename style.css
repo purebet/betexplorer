@@ -5,6 +5,18 @@
     box-sizing: border-box;
 }
 
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 body {
     font-family: 'arial', sans-serif;
 }
@@ -13,11 +25,23 @@ body {
     padding: 10px;
 }
 
-#filters > select, #filters > button {
-    padding: 5px 10px;
+label {
+    display: inline-block;
+    margin-right: 20px;
 }
 
-#filters > button {
+label > span {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+#filters select, #filters input {
+    padding: 5px 10px;
+    background-color: #E1E1E1;
+}
+
+#filters input[type=submit] {
     background-color: #23B3FF;
     cursor: pointer;
 }
@@ -32,16 +56,23 @@ tr:nth-child(odd) > * {
     background-color: #e7e7e7;
 }
 
-td:nth-child(9), td:nth-child(10), td:nth-child(11) {
-    max-width: 180px;
+tr > * {
+    padding: 10px 5px;
+    overflow: hidden;
+    font-family: monospace;
+    text-overflow: ellipsis;
+    text-align: right;
+}
+
+tr>:nth-child(6), tr>:nth-child(9), tr>:nth-child(10), tr>:nth-child(11), tr>:nth-child(13) {
+    max-width: 140px;
+    text-align: left;
+}
+
+tr>:nth-child(12), tr>:nth-child(14) {
+    text-align: center;
 }
 
 th {
     border-bottom: 1px solid #b4b4b4;
-}
-
-th, td {
-    padding: 10px 5px;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

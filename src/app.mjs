@@ -2,8 +2,8 @@ import {sportsMap} from './maps.mjs';
 
 const CONNECTION = new solanaWeb3.Connection('https://api.devnet.solana.com');
 const PROGRAM_ID = new solanaWeb3.PublicKey('9uReBEtnYGYf1oUe4KGSt6kQhsqGE74i17NzRNEDLutn');
+const FILTER_FORM = document.getElementById('filters');
 const BETS_TABLE = document.getElementById('betsTable');
-const FILTERS = new Map();
 const TABLE_COLS = [
     'sport', 'league', 'event', 'period', 'mkt', 'player',
     'stake0', 'stake1', 'wallet0', 'wallet1', 'rent_payer',
@@ -16,9 +16,55 @@ init();
 
 // Event listeners *********************************
 
-document.getElementById('filterBets').addEventListener('click', async () => {
+FILTER_FORM.addEventListener('submit', async e => {
+    e.preventDefault();
     clearTable();
-    displayBets(await fetchBets());
+
+    const filters = [];
+    const sport = parseInt(FILTER_FORM.sportFilter.value);
+    const league = parseInt(FILTER_FORM.leagueFilter.value);
+    const event = parseInt(FILTER_FORM.eventFilter.value);
+    const mkt = parseInt(FILTER_FORM.mktFilter.value);
+    const isFree = parseInt(FILTER_FORM.isFreeFilter.value);
+    const isAgg = parseInt(FILTER_FORM.isAggregateFilter.value);
+
+    if (!isNaN(sport)) {
+        filters.push({memcmp: {
+            bytes: Base58.encode(new Uint8Array([sport])),
+            offset: 0
+        }});
+    }
+
+    if (!isNaN(league)) {
+        const bytes = encodeNumForFilter(league, 4);
+        filters.push({memcmp: { bytes, offset: 1 }});
+    }
+
+    if (!isNaN(event)) {
+        const bytes = encodeNumForFilter(event, 8);
+        filters.push({memcmp: { bytes, offset: 5 }});
+    }
+
+    if (!isNaN(mkt)) {
+        const bytes = encodeNumForFilter(mkt, 2);
+        filters.push({memcmp: { bytes, offset: 14 }});
+    }
+
+    if (!isNaN(isFree)) {
+        filters.push({memcmp: {
+            bytes: Base58.encode(new Uint8Array([isFree])),
+            offset: 132
+        }});
+    }
+
+    if (!isNaN(isAgg)) {
+        filters.push({memcmp: {
+            bytes: Base58.encode(new Uint8Array([isAgg])),
+            offset: 141
+        }});
+    }
+
+    displayBets(await fetchBets(filters));
 });
 
 
@@ -32,7 +78,7 @@ async function init() {
 
 function initSportFilter() {
     const frag = new DocumentFragment();
-    const select = document.getElementById('sportFilter');
+    const select = FILTER_FORM.sportFilter;
 
     for (const [name, id] of sportsMap.entries()) {
         const option = document.createElement('option');
@@ -42,22 +88,6 @@ function initSportFilter() {
     }
 
     select.appendChild(frag);
-
-    select.addEventListener('change', function() {
-        const sport = parseInt(this.value);
-
-        if (isNaN(sport)) {
-            FILTERS.delete('sport');
-            return;
-        }
-
-        FILTERS.set('sport', {
-            memcmp: {
-                bytes: Base58.encode(new Uint8Array([sport])),
-                offset: 0
-            }
-        });
-    });
 }
 
 function initTable() {
@@ -82,17 +112,16 @@ function clearTable() {
     }
 }
 
-function fetchBets() {
-    const filters = Array.from(FILTERS.values());
+function fetchBets(filters) {
     return CONNECTION.getProgramAccounts(PROGRAM_ID, {filters});
 }
 
-async function displayBets(bets) {
+function displayBets(bets) {
     const frag = new DocumentFragment();
-    const arr = bets.map(({account}) => parseAccountData(account.data));
-    const accountDatas = await Promise.all(arr);
 
-    for (const data of accountDatas) {
+    for (const {account} of bets) {
+        const data = parseAccountData(account.data);
+
         if (data) {
             const tr = getRow(data);
             frag.appendChild(tr);
@@ -120,7 +149,7 @@ async function displayBets(bets) {
 //     pub to_aggregate: bool,      141
 // }
 
-async function parseAccountData(data) {
+function parseAccountData(data) {
     if (data.byteLength < 141) return false;
 
     const dataView = new DataView(data.buffer);
@@ -131,16 +160,55 @@ async function parseAccountData(data) {
                event: dataView.getBigUint64(5, true),
               period: dataView.getUint8(13),
                  mkt: dataView.getUint16(14, true),
-              player: dataView.getUint32(16, true),
-              stake0: dataView.getBigUint64(20, true),
-              stake1: dataView.getBigUint64(28, true),
+              player: parsePlayer(data.subarray(16, 20)),
+              stake0: parseStake(dataView.getBigUint64(20, true)),
+              stake1: parseStake(dataView.getBigUint64(28, true)),
              wallet0: new solanaWeb3.PublicKey(data.subarray(36, 68)).toBase58(),
              wallet1: new solanaWeb3.PublicKey(data.subarray(68, 100)).toBase58(), 
           rent_payer: new solanaWeb3.PublicKey(data.subarray(100, 132)).toBase58(),
          is_free_bet: dataView.getUint8(132) === 1,
-           placed_at: dataView.getBigUint64(133, true),
+           placed_at: parseDate(dataView.getBigUint64(133, true)),
         to_aggregate: data.byteLength === 142
     };
+}
+
+function encodeNumForFilter(num, size) {
+    const buffer = new ArrayBuffer(size);
+    const dataView = new DataView(buffer);
+    const map = {
+        2: 'setUint16',
+        4: 'setUint32',
+        8: 'setBigUint64'
+    };
+    const method = map[size];
+
+    dataView[method](0, size === 8 ? BigInt(num) : num, true);
+    return Base58.encode(new Uint8Array(buffer));
+}
+
+function parsePlayer(buff) {
+    let player = [];
+
+    for (let i = 0; i < 4; ++i) {
+        if (buff[i]) {
+            player.push(buff[i]);
+            if (!i) player.push(46); // 46 is the char code for ".";
+        }
+    }
+
+    return player.length ? new TextDecoder().decode(new Uint8Array(player)) : '';
+}
+
+function parseStake(stake) {
+    return parseInt(stake) / 1e6; // 'parseInt' is needed because 'stake' is BigInt.
+}
+
+function parseDate(seconds) {
+    const millSec = parseInt(seconds) * 1000; // 'parseInt' is needed because 'seconds' is BigInt.
+    const date = new Date(millSec).toString().split(' ');
+
+    // date == [Sun, Apr, 14, 2024, 13:21:12, GMT+0530, (India, Standard, Time)]
+    return `${date[1]} ${date[2]}, ${date[4]}`;
 }
 
 function getRow(accountData) {
@@ -148,7 +216,14 @@ function getRow(accountData) {
 
     for (const column of TABLE_COLS) {
         const td = document.createElement('td');
-        td.textContent = accountData[column];
+        const content = accountData[column];
+        
+        if (column === 'is_free_bet' || column === 'to_aggregate') {
+            if (content) td.textContent = '✔';
+        } else {
+            td.textContent = content;
+        }
+        
         tr.appendChild(td);
     }
 
