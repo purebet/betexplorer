@@ -7,7 +7,7 @@ const BETS_TABLE = document.getElementById('betsTable');
 const TABLE_COLS = [
     'sport', 'league', 'event', 'period', 'mkt', 'player',
     'stake0', 'stake1', 'wallet0', 'wallet1', 'rent_payer',
-    'is_free_bet', 'placed_at', 'to_aggregate'
+    'is_free_bet', 'placed_at', 'to_aggregate', 'account'
 ];
 
 
@@ -119,10 +119,11 @@ function fetchBets(filters) {
 function displayBets(bets) {
     const frag = new DocumentFragment();
 
-    for (const {account} of bets) {
+    for (const {account, pubkey} of bets) {
         const data = parseAccountData(account.data);
 
         if (data) {
+            data.account = pubkey.toBase58();
             const tr = getRow(data);
             frag.appendChild(tr);
         }
@@ -217,8 +218,13 @@ function getRow(accountData) {
     for (const column of TABLE_COLS) {
         const td = document.createElement('td');
         const content = accountData[column];
-        
-        if (column === 'is_free_bet' || column === 'to_aggregate') {
+
+        if (column === 'account') {
+            const button = document.createElement('button');
+            button.textContent = content;
+            button.addEventListener('click', clickToCopy);
+            td.appendChild(button);
+        } else if (column === 'is_free_bet' || column === 'to_aggregate') {
             if (content) td.textContent = '✔';
         } else {
             td.textContent = content;
@@ -228,4 +234,9 @@ function getRow(accountData) {
     }
 
     return tr;
+}
+
+function clickToCopy() {
+    const text = this.textContent;
+    navigator.clipboard.writeText(text);
 }
