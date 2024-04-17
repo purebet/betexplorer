@@ -1,13 +1,16 @@
 import {sportsMap} from './maps.mjs';
 
-const CONNECTION = new solanaWeb3.Connection('https://api.devnet.solana.com');
+const RPC_PROVIDER = 'https://devnet.helius-rpc.com/?api-key=f508089c-505c-4698-828b-4ed8062cb97f';
+// const RPC_PROVIDER = 'https://api.devnet.solana.com';
+
+const CONNECTION = new solanaWeb3.Connection(RPC_PROVIDER);
 const PROGRAM_ID = new solanaWeb3.PublicKey('9uReBEtnYGYf1oUe4KGSt6kQhsqGE74i17NzRNEDLutn');
 const FILTER_FORM = document.getElementById('filters');
 const BETS_TABLE = document.getElementById('betsTable');
 const TABLE_COLS = [
     'sport', 'league', 'event', 'period', 'mkt', 'player',
     'stake0', 'stake1', 'wallet0', 'wallet1', 'rent_payer',
-    'is_free_bet', 'placed_at', 'to_aggregate', 'account'
+    'is_free_bet', 'placed_at', 'to_aggregate', 'account', 'transaction'
 ];
 
 
@@ -112,8 +115,14 @@ function clearTable() {
     }
 }
 
-function fetchBets(filters) {
-    return CONNECTION.getProgramAccounts(PROGRAM_ID, {filters});
+async function fetchBets(filters) {
+    try {
+        return await CONNECTION.getProgramAccounts(PROGRAM_ID, {filters});
+    } catch (err) {
+        console.error(err);
+    }
+
+    return [];
 }
 
 function displayBets(bets) {
@@ -123,7 +132,7 @@ function displayBets(bets) {
         const data = parseAccountData(account.data);
 
         if (data) {
-            data.account = pubkey.toBase58();
+            data.account = pubkey;
             const tr = getRow(data);
             frag.appendChild(tr);
         }
@@ -216,27 +225,66 @@ function getRow(accountData) {
     const tr = document.createElement('tr');
 
     for (const column of TABLE_COLS) {
-        const td = document.createElement('td');
+        const td = document.createElement('td');        
+        tr.appendChild(td);
+
+        if (column === 'transaction') {
+            const button = document.createElement('button');
+            button.textContent = column;
+            button.addEventListener('click', copyFirstTransaction(accountData.account));
+            td.appendChild(button);
+            continue;
+        }
+
         const content = accountData[column];
 
         if (column === 'account') {
             const button = document.createElement('button');
-            button.textContent = content;
-            button.addEventListener('click', clickToCopy);
+            button.textContent = content.toBase58();
+            button.addEventListener('click', copyAddress);
             td.appendChild(button);
         } else if (column === 'is_free_bet' || column === 'to_aggregate') {
             if (content) td.textContent = '✔';
         } else {
             td.textContent = content;
         }
-        
-        tr.appendChild(td);
     }
 
     return tr;
 }
 
-function clickToCopy() {
-    const text = this.textContent;
-    navigator.clipboard.writeText(text);
+async function copyAddress() {
+    const buttonText = this.textContent;
+
+    try {
+        await navigator.clipboard.writeText(buttonText);
+        this.textContent = 'Copied';
+    } catch (err) {
+        this.textContent = 'Copy Error!';
+    }
+
+    window.setTimeout(() => this.textContent = buttonText, 1000);
+}
+
+function copyFirstTransaction(pubKey) {
+    return async function() {
+        const buttonText = this.textContent;
+        this.textContent = 'Loading...';
+
+        try {
+            const arr = await CONNECTION.getSignaturesForAddress(pubKey);
+    
+            if (!arr.length) {
+                this.textContent = 'No Transactions';
+            } else {
+                const {signature} = arr.pop();
+                await navigator.clipboard.writeText(signature);
+                this.textContent = 'Copied';
+            }
+        } catch (err) {
+            this.textContent = 'Copy Error!';
+        }
+
+        window.setTimeout(() => this.textContent = buttonText, 1000);
+    };
 }
