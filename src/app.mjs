@@ -1,9 +1,5 @@
 import {sportsMap} from './maps.mjs';
 
-const RPC_PROVIDER = 'https://devnet.helius-rpc.com/?api-key=f508089c-505c-4698-828b-4ed8062cb97f';
-// const RPC_PROVIDER = 'https://api.devnet.solana.com';
-
-const CONNECTION = new solanaWeb3.Connection(RPC_PROVIDER);
 const PROGRAM_ID = new solanaWeb3.PublicKey('9uReBEtnYGYf1oUe4KGSt6kQhsqGE74i17NzRNEDLutn');
 const FILTER_FORM = document.getElementById('filters');
 const BETS_TABLE = document.getElementById('betsTable');
@@ -13,11 +9,26 @@ const TABLE_COLS = [
     'is_free_bet', 'placed_at', 'to_aggregate', 'account', 'transaction'
 ];
 
+const RPC_PROVIDER = {
+    devnet: 'https://devnet.helius-rpc.com/?api-key=f508089c-505c-4698-828b-4ed8062cb97f',
+    mainnet: 'https://api.mainnet-beta.solana.com'
+};
+
+let CONNECTION = new solanaWeb3.Connection(RPC_PROVIDER.mainnet);
+
+
 
 init();
 
 
 // Event listeners *********************************
+
+document.getElementById('cluster-selector').addEventListener('change', async function() {
+    CONNECTION = new solanaWeb3.Connection(RPC_PROVIDER[this.value]);
+    clearTable();
+    displayBets(await fetchBets());
+});
+
 
 FILTER_FORM.addEventListener('submit', async e => {
     e.preventDefault();

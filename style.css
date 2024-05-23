@@ -21,6 +21,37 @@ body {
     font-family: 'arial', sans-serif;
 }
 
+header {
+    position: relative;
+    height: 50px;
+    border-bottom: 1px solid #b4b4b4;
+}
+
+header > * {
+    position: absolute;
+    display: inline-block;
+    margin: auto 20px;
+    top: 0px;
+    bottom: 0px;
+}
+
+header > h2 {
+    line-height: 50px;
+}
+
+#cluster-selector {
+    padding: 0px 16px;
+    right: 0px;
+    height: 30px;
+    font-weight: bold;
+    background-color: #23B3FF;
+    cursor: pointer;
+}
+
+main {
+    padding-top: 10px;
+}
+
 #filters {
     padding: 10px;
 }
