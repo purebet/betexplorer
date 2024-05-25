@@ -11,7 +11,7 @@ const TABLE_COLS = [
 
 const RPC_PROVIDER = {
     devnet: 'https://devnet.helius-rpc.com/?api-key=f508089c-505c-4698-828b-4ed8062cb97f',
-    mainnet: 'https://api.mainnet-beta.solana.com'
+    mainnet: 'https://thrumming-burned-bush.solana-mainnet.quiknode.pro/5bb1fc012c796f46f7249e3ec7b3e62ed563f846/'
 };
 
 let CONNECTION = new solanaWeb3.Connection(RPC_PROVIDER.mainnet);
