@@ -5,7 +5,7 @@ const FILTER_FORM = document.getElementById('filters');
 const BETS_TABLE = document.getElementById('betsTable');
 const TABLE_COLS = [
     'sport', 'league', 'event', 'period', 'mkt', 'player',
-    'stake0', 'stake1', 'wallet0', 'wallet1', 'rent_payer',
+    'stake0', 'stake1', 'odds0', 'odds1', 'wallet0', 'wallet1', 'rent_payer',
     'is_free_bet', 'placed_at', 'to_aggregate', 'account', 'transaction'
 ];
 
@@ -174,7 +174,8 @@ function parseAccountData(data) {
     if (data.byteLength < 141) return false;
 
     const dataView = new DataView(data.buffer);
-
+    let stake0 = parseStake(dataView.getBigUint64(20, true))
+    let stake1 = parseStake(dataView.getBigUint64(28, true))
     return {
                sport: dataView.getUint8(0),
               league: dataView.getUint32(1, true),
@@ -182,8 +183,10 @@ function parseAccountData(data) {
               period: dataView.getUint8(13),
                  mkt: dataView.getUint16(14, true),
               player: parsePlayer(data.subarray(16, 20)),
-              stake0: parseStake(dataView.getBigUint64(20, true)),
-              stake1: parseStake(dataView.getBigUint64(28, true)),
+              stake0: stake0,
+              stake1: stake1,
+               odds0: Math.round( (stake0+stake1)/stake0 *1000)/1000,
+               odds1: Math.round( (stake0+stake1)/stake1 *1000)/1000,
              wallet0: new solanaWeb3.PublicKey(data.subarray(36, 68)).toBase58(),
              wallet1: new solanaWeb3.PublicKey(data.subarray(68, 100)).toBase58(), 
           rent_payer: new solanaWeb3.PublicKey(data.subarray(100, 132)).toBase58(),

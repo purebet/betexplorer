@@ -95,12 +95,12 @@ tr > * {
     text-align: right;
 }
 
-tr>:nth-child(6), tr>:nth-child(9), tr>:nth-child(10), tr>:nth-child(11), tr>:nth-child(13), tr>:nth-child(15) {
+tr>:nth-child(6), tr>:nth-child(11), tr>:nth-child(12), tr>:nth-child(13), tr>:nth-child(15), tr>:nth-child(17) {
     max-width: 140px;
     text-align: left;
 }
 
-tr>:nth-child(12), tr>:nth-child(14) {
+tr>:nth-child(14), tr>:nth-child(16) {
     text-align: center;
 }
 
